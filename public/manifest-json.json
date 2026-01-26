@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "PromptPocket",
+  "version": "1.0.0",
+  "description": "Save, organize, and reuse your AI prompts across platforms",
+  
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "permissions": [
+    "storage",
+    "sidePanel"
+  ],
+
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ],
+      "js": ["content-script.js"],
+      "css": ["assets/content-script.css"],
+      "run_at": "document_end"
+    }
+  ],
+
+  "side_panel": {
+    "default_path": "side-panel.html"
+  },
+
+  "action": {
+    "default_title": "PromptPocket",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*", "chunks/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
