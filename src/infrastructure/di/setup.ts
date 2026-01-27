@@ -5,9 +5,10 @@ import { IndexedDBFolderRepository } from '../repositories/IndexedDBFolderReposi
 import { FuseSearchEngine } from '../search/FuseSearchEngine';
 import { AdapterRegistry } from '../platform-adapters/base/AdapterRegistry';
 import { ChatGPTAdapter } from '../platform-adapters/chatgpt/ChatGPTAdapter';
-import { SavePromptUseCase } from '@application/use-cases/prompt/SavePromptUseCase';
-import { GetAllPromptsUseCase } from '@application/use-cases/prompt/GetAllPromptsUseCase';
-import { SearchPromptsUseCase } from '@application/use-cases/search/SearchPromptsUseCase';
+import { SavePromptUseCase } from '@application/use-cases/SavePromptUseCase';
+import { GetAllPromptsUseCase } from '@application/use-cases/GetAllPromptsUseCase';
+import { SearchPromptsUseCase } from '@application/use-cases/SearchPromptsUseCase';
+import { DeletePromptUseCase } from '@application/use-cases/DeletePromptUseCase';
 
 export async function setupDI(container: DIContainer): Promise<void> {
   // Storage layer
@@ -55,6 +56,13 @@ export async function setupDI(container: DIContainer): Promise<void> {
     new SearchPromptsUseCase(
       container.resolve('ISearchIndex'),
       container.resolve('IPromptRepository')
+    )
+  );
+
+  container.register('DeletePromptUseCase', () =>
+    new DeletePromptUseCase(
+      container.resolve('IPromptRepository'),
+      container.resolve('ISearchIndex')
     )
   );
 

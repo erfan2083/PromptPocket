@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { Prompt } from '@domain/entities/Prompt';
 import { getContainer } from '@infrastructure/di';
-import { GetAllPromptsUseCase } from '@application/use-cases/prompt/GetAllPromptsUseCase';
-import { SavePromptUseCase } from '@application/use-cases/prompt/SavePromptUseCase';
+import { GetAllPromptsUseCase } from '@application/use-cases/GetAllPromptsUseCase';
+import { SavePromptUseCase } from '@application/use-cases/SavePromptUseCase';
+import { DeletePromptUseCase } from '@application/use-cases/DeletePromptUseCase';
 import { SavePromptRequest } from '@application/dto/SavePromptRequest';
 
 interface PromptStore {
@@ -59,8 +60,15 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
   },
 
   deletePrompt: async (id: string) => {
-    // TODO: Implement delete use case
-    console.log('Delete prompt:', id);
+    const container = getContainer();
+    const useCase = container.resolve<DeletePromptUseCase>('DeletePromptUseCase');
+    const result = await useCase.execute(id);
+
+    if (result.success) {
+      await get().loadPrompts();
+    } else {
+      throw new Error(result.error || 'Failed to delete prompt');
+    }
   },
 
   getPromptById: (id: string) => {

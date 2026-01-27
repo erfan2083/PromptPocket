@@ -1,7 +1,8 @@
 import { getContainer, setupDI } from '@infrastructure/di';
-import { SavePromptUseCase } from '@application/use-cases/prompt/SavePromptUseCase';
-import { GetAllPromptsUseCase } from '@application/use-cases/prompt/GetAllPromptsUseCase';
-import { SearchPromptsUseCase } from '@application/use-cases/search/SearchPromptsUseCase';
+import { SavePromptUseCase } from '@application/use-cases/SavePromptUseCase';
+import { GetAllPromptsUseCase } from '@application/use-cases/GetAllPromptsUseCase';
+import { SearchPromptsUseCase } from '@application/use-cases/SearchPromptsUseCase';
+import { DeletePromptUseCase } from '@application/use-cases/DeletePromptUseCase';
 import { ExtensionMessage, ExtensionResponse } from '@shared/types';
 
 console.log('[PromptPocket] Background script loaded');
@@ -28,7 +29,7 @@ initialize();
 // Handle messages from content script and side panel
 chrome.runtime.onMessage.addListener((
   message: ExtensionMessage,
-  sender,
+  _sender,
   sendResponse: (response: ExtensionResponse) => void
 ) => {
   handleMessage(message)
@@ -84,6 +85,16 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
           page: result.page,
           hasMore: result.hasMore
         },
+        error: result.error,
+        requestId: message.requestId
+      };
+    }
+
+    case 'DELETE_PROMPT': {
+      const useCase = container.resolve<DeletePromptUseCase>('DeletePromptUseCase');
+      const result = await useCase.execute(message.payload.id);
+      return {
+        success: result.success,
         error: result.error,
         requestId: message.requestId
       };
