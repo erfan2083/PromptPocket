@@ -5,7 +5,7 @@ export interface SavePromptRequest {
   title?: string;
   folderId?: string;
   tags?: string[];
-  platform: PlatformType;
+  platform?: PlatformType;
   url?: string;
   conversationId?: string;
   allowDuplicate?: boolean;

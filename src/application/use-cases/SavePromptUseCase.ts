@@ -28,7 +28,7 @@ export class SavePromptUseCase {
         title: request.title,
         folderId,
         tags,
-        platform: request.platform,
+        platform: request.platform || 'unknown',
         url: request.url,
         conversationId: request.conversationId
       });

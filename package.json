@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && BUILD_TARGET=content-script vite build && BUILD_TARGET=background vite build && cp public/manifest.json dist/manifest.json && mkdir -p dist/assets && cp src/content-script/styles.css dist/assets/content-script.css",
     "build:watch": "vite build --watch",
     "preview": "vite preview",
     "test": "vitest",
