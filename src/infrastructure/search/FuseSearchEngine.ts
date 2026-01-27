@@ -1,4 +1,4 @@
-import Fuse from 'fuse.js';
+import Fuse, { IFuseOptions, FuseResultMatch } from 'fuse.js';
 import { ISearchIndex, SearchResult, SearchMatch } from '@application/ports/output/ISearchIndex';
 import { Prompt, PromptDTO } from '@domain/entities/Prompt';
 import { PromptId } from '@domain/value-objects/PromptId';
@@ -8,7 +8,7 @@ export class FuseSearchEngine implements ISearchIndex {
   private fuse: Fuse<PromptDTO> | null = null;
   private prompts: PromptDTO[] = [];
 
-  private readonly options: Fuse.IFuseOptions<PromptDTO> = {
+  private readonly fuseOptions: IFuseOptions<PromptDTO> = {
     keys: [
       { name: 'title', weight: 0.4 },
       { name: 'content', weight: 0.5 },
@@ -41,7 +41,7 @@ export class FuseSearchEngine implements ISearchIndex {
     await this.rebuildIndex();
   }
 
-  async search(query: string, options?: SearchOptions): Promise<SearchResult[]> {
+  async search(query: string, _options?: SearchOptions): Promise<SearchResult[]> {
     if (!this.fuse || !query.trim()) {
       return [];
     }
@@ -61,10 +61,10 @@ export class FuseSearchEngine implements ISearchIndex {
   }
 
   private async rebuildIndex(): Promise<void> {
-    this.fuse = new Fuse(this.prompts, this.options);
+    this.fuse = new Fuse(this.prompts, this.fuseOptions);
   }
 
-  private convertMatches(fuseMatches: readonly Fuse.FuseResultMatch[]): SearchMatch[] {
+  private convertMatches(fuseMatches: readonly FuseResultMatch[]): SearchMatch[] {
     return fuseMatches.map(match => ({
       key: match.key || '',
       value: match.value || '',
