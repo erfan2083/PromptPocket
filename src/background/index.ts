@@ -56,6 +56,9 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
     case 'SAVE_PROMPT': {
       const useCase = container.resolve<SavePromptUseCase>('SavePromptUseCase');
       const result = await useCase.execute(message.payload);
+      if (result.success) {
+        chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
+      }
       return {
         success: result.success,
         data: result.promptId,
@@ -93,6 +96,9 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
     case 'DELETE_PROMPT': {
       const useCase = container.resolve<DeletePromptUseCase>('DeletePromptUseCase');
       const result = await useCase.execute(message.payload.id);
+      if (result.success) {
+        chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
+      }
       return {
         success: result.success,
         error: result.error,

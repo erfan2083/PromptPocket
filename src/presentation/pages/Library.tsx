@@ -17,6 +17,17 @@ export default function Library() {
     loadPrompts();
   }, [loadPrompts]);
 
+  // Listen for prompts updated from content script save button
+  useEffect(() => {
+    const listener = (message: { type: string }) => {
+      if (message.type === 'PROMPTS_UPDATED') {
+        loadPrompts();
+      }
+    };
+    chrome.runtime.onMessage.addListener(listener);
+    return () => chrome.runtime.onMessage.removeListener(listener);
+  }, [loadPrompts]);
+
   const filteredPrompts = prompts.filter(p =>
     p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.content.toLowerCase().includes(searchQuery.toLowerCase())
