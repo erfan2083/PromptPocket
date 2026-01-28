@@ -12,29 +12,43 @@ interface SaveButtonProps {
 export function SaveButton({ content, platform, url, compact = false }: SaveButtonProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [savedPromptId, setSavedPromptId] = useState<string | null>(null);
 
-  const handleSave = async () => {
-    if (isSaved || isLoading) return;
+  const handleClick = async () => {
+    if (isLoading) return;
 
     setIsLoading(true);
 
     try {
-      const response = await chrome.runtime.sendMessage({
-        type: 'SAVE_PROMPT',
-        payload: {
-          content,
-          platform,
-          url
-        }
-      });
+      if (isSaved && savedPromptId) {
+        // Unsave: delete the prompt
+        const response = await chrome.runtime.sendMessage({
+          type: 'DELETE_PROMPT',
+          payload: { id: savedPromptId }
+        });
 
-      if (response.success) {
-        setIsSaved(true);
+        if (response.success) {
+          setIsSaved(false);
+          setSavedPromptId(null);
+        } else {
+          console.error('Failed to unsave prompt:', response.error);
+        }
       } else {
-        console.error('Failed to save prompt:', response.error);
+        // Save the prompt
+        const response = await chrome.runtime.sendMessage({
+          type: 'SAVE_PROMPT',
+          payload: { content, platform, url }
+        });
+
+        if (response.success) {
+          setIsSaved(true);
+          setSavedPromptId(response.data);
+        } else {
+          console.error('Failed to save prompt:', response.error);
+        }
       }
     } catch (error) {
-      console.error('Error saving prompt:', error);
+      console.error('Error toggling prompt save:', error);
     } finally {
       setIsLoading(false);
     }
@@ -46,7 +60,7 @@ export function SaveButton({ content, platform, url, compact = false }: SaveButt
 
   return (
     <button
-      onClick={handleSave}
+      onClick={handleClick}
       disabled={isLoading}
       className={buttonClass}
       title={isSaved ? 'Saved to PromptPocket' : 'Save to PromptPocket'}
