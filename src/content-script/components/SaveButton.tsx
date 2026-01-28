@@ -13,6 +13,7 @@ export function SaveButton({ content, platform, url, compact = false }: SaveButt
   const [isSaved, setIsSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [savedPromptId, setSavedPromptId] = useState<string | null>(null);
+  const [contextInvalid, setContextInvalid] = useState(false);
 
   const handleClick = async () => {
     if (isLoading) return;
@@ -48,7 +49,12 @@ export function SaveButton({ content, platform, url, compact = false }: SaveButt
         }
       }
     } catch (error) {
-      console.error('Error toggling prompt save:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('Extension context invalidated')) {
+        setContextInvalid(true);
+      } else {
+        console.error('Error toggling prompt save:', error);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -57,6 +63,27 @@ export function SaveButton({ content, platform, url, compact = false }: SaveButt
   const buttonClass = compact
     ? `promptpocket-save-btn-compact ${isSaved ? 'saved' : ''}`
     : `promptpocket-save-btn ${isSaved ? 'saved' : ''}`;
+
+  if (contextInvalid) {
+    return (
+      <button
+        disabled
+        className={buttonClass}
+        title="Extension updated — please refresh the page"
+        aria-label="Extension updated — please refresh the page"
+        style={{ opacity: 0.5, cursor: 'not-allowed' }}
+      >
+        {compact ? (
+          <Bookmark size={18} />
+        ) : (
+          <>
+            <Bookmark size={14} className="inline mr-1" />
+            Refresh page
+          </>
+        )}
+      </button>
+    );
+  }
 
   return (
     <button
