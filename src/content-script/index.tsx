@@ -60,20 +60,34 @@ class ContentScriptApp {
       return;
     }
 
+    const adapter = this.registry.getActive();
+    if (!adapter) return;
+
     // Create container for React component
     const container = document.createElement('div');
     container.className = 'promptpocket-button-container';
-    
-    // Make message element relative for absolute positioning
-    if (getComputedStyle(messageElement).position === 'static') {
-      messageElement.style.position = 'relative';
-    }
-    
-    messageElement.appendChild(container);
 
-    // Get prompt content
-    const adapter = this.registry.getActive();
-    if (!adapter) return;
+    // Try to find the action bar for this message (ChatGPT-style injection)
+    let injectionTarget: HTMLElement = messageElement;
+    let useActionBarStyle = false;
+
+    if (adapter.getActionBar) {
+      const actionBar = adapter.getActionBar(messageElement);
+      if (actionBar) {
+        injectionTarget = actionBar;
+        useActionBarStyle = true;
+        container.className = 'promptpocket-button-container promptpocket-actionbar';
+      }
+    }
+
+    // Fallback: position absolutely on the message element
+    if (!useActionBarStyle) {
+      if (getComputedStyle(messageElement).position === 'static') {
+        messageElement.style.position = 'relative';
+      }
+    }
+
+    injectionTarget.appendChild(container);
 
     const content = adapter.getMessageText(messageElement);
     const platform = adapter.platform;
@@ -83,10 +97,11 @@ class ContentScriptApp {
     const root = ReactDOM.createRoot(container);
     root.render(
       <React.StrictMode>
-        <SaveButton 
+        <SaveButton
           content={content}
           platform={platform}
           url={url}
+          compact={useActionBarStyle}
         />
       </React.StrictMode>
     );

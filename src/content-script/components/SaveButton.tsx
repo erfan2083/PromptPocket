@@ -6,9 +6,10 @@ interface SaveButtonProps {
   content: string;
   platform: PlatformType;
   url: string;
+  compact?: boolean;
 }
 
-export function SaveButton({ content, platform, url }: SaveButtonProps) {
+export function SaveButton({ content, platform, url, compact = false }: SaveButtonProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -29,36 +30,41 @@ export function SaveButton({ content, platform, url }: SaveButtonProps) {
 
       if (response.success) {
         setIsSaved(true);
-        // Show success feedback
-        setTimeout(() => {
-          // Could reset after some time or keep it saved
-        }, 2000);
       } else {
         console.error('Failed to save prompt:', response.error);
-        alert('Failed to save prompt: ' + response.error);
       }
     } catch (error) {
       console.error('Error saving prompt:', error);
-      alert('Error saving prompt');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const buttonClass = compact
+    ? `promptpocket-save-btn-compact ${isSaved ? 'saved' : ''}`
+    : `promptpocket-save-btn ${isSaved ? 'saved' : ''}`;
+
   return (
     <button
       onClick={handleSave}
       disabled={isLoading}
-      className={`promptpocket-save-btn ${isSaved ? 'saved' : ''}`}
+      className={buttonClass}
       title={isSaved ? 'Saved to PromptPocket' : 'Save to PromptPocket'}
+      aria-label={isSaved ? 'Saved to PromptPocket' : 'Save to PromptPocket'}
     >
       {isLoading ? (
         <span className="inline-block animate-spin">⏳</span>
       ) : isSaved ? (
-        <>
-          <BookmarkCheck size={14} className="inline mr-1" />
-          Saved
-        </>
+        compact ? (
+          <BookmarkCheck size={18} />
+        ) : (
+          <>
+            <BookmarkCheck size={14} className="inline mr-1" />
+            Saved
+          </>
+        )
+      ) : compact ? (
+        <Bookmark size={18} />
       ) : (
         <>
           <Bookmark size={14} className="inline mr-1" />

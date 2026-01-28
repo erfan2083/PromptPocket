@@ -21,8 +21,11 @@ export interface IPlatformAdapter {
   // Input operations
   getInputBox(): HTMLElement | null;
   insertText(text: string): Promise<void>;
-  
+
   // Event handling
   onNewMessage(callback: (element: HTMLElement) => void): void;
   offNewMessage(callback: (element: HTMLElement) => void): void;
+
+  // Optional: Get action bar for button injection (platform-specific)
+  getActionBar?(messageElement: HTMLElement): HTMLElement | null;
 }
