@@ -30,6 +30,12 @@ class ContentScriptApp {
       // Inject save buttons on existing messages
       this.injectButtonsOnExistingMessages();
 
+      // ChatGPT loads conversation messages asynchronously,
+      // so re-scan a few times after initial load
+      for (const delay of [1000, 3000, 6000]) {
+        setTimeout(() => this.injectButtonsOnExistingMessages(), delay);
+      }
+
       // Listen for new messages
       adapter.onNewMessage((messageElement) => {
         this.injectSaveButton(messageElement);
