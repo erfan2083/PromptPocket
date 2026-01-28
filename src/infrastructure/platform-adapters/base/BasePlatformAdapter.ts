@@ -4,6 +4,8 @@ import { PlatformType, PlatformSelectors } from '@shared/types';
 export abstract class BasePlatformAdapter implements IPlatformAdapter {
   protected observers: MutationObserver[] = [];
   protected messageCallbacks: Set<(element: HTMLElement) => void> = new Set();
+  private observeRetryCount = 0;
+  private readonly MAX_OBSERVE_RETRIES = 15;
 
   abstract readonly name: string;
   abstract readonly platform: PlatformType;
@@ -13,8 +15,8 @@ export abstract class BasePlatformAdapter implements IPlatformAdapter {
 
   async init(): Promise<void> {
     await this.waitForDOM();
-    this.observeMessages();
     this.injectStyles();
+    this.observeMessages();
   }
 
   destroy(): void {
@@ -30,8 +32,15 @@ export abstract class BasePlatformAdapter implements IPlatformAdapter {
 
   getMessageText(element: HTMLElement): string {
     const selectors = this.getSelectors();
-    const textElement = element.querySelector<HTMLElement>(selectors.messageText);
-    return textElement?.innerText || element.innerText || '';
+    // Try each selector in the comma-separated list
+    const selectorList = selectors.messageText.split(',').map(s => s.trim());
+    for (const sel of selectorList) {
+      const textElement = element.querySelector<HTMLElement>(sel);
+      if (textElement?.innerText) {
+        return textElement.innerText;
+      }
+    }
+    return element.innerText || '';
   }
 
   getInputBox(): HTMLElement | null {
@@ -67,19 +76,34 @@ export abstract class BasePlatformAdapter implements IPlatformAdapter {
     const container = document.querySelector(selectors.messagesContainer);
 
     if (!container) {
-      console.warn(`Messages container not found for ${this.name}`);
-      setTimeout(() => this.observeMessages(), 1000);
+      if (this.observeRetryCount < this.MAX_OBSERVE_RETRIES) {
+        this.observeRetryCount++;
+        console.log(`[PromptPocket] Messages container not found, retrying (${this.observeRetryCount}/${this.MAX_OBSERVE_RETRIES})...`);
+        setTimeout(() => this.observeMessages(), 2000);
+      } else {
+        console.warn(`[PromptPocket] Messages container not found after ${this.MAX_OBSERVE_RETRIES} retries`);
+      }
       return;
     }
+
+    console.log(`[PromptPocket] Observing messages in: ${selectors.messagesContainer}`);
+    const userMessageSelector = selectors.userMessage;
 
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
-          if (node instanceof HTMLElement) {
-            if (this.isUserMessage(node)) {
-              this.messageCallbacks.forEach(cb => cb(node));
-            }
+          if (!(node instanceof HTMLElement)) continue;
+
+          // Check if the added node itself is a user message
+          if (this.isUserMessage(node)) {
+            this.messageCallbacks.forEach(cb => cb(node));
           }
+
+          // Also check if the added node contains user messages deeper in the subtree
+          const childMessages = node.querySelectorAll<HTMLElement>(userMessageSelector);
+          childMessages.forEach(msg => {
+            this.messageCallbacks.forEach(cb => cb(msg));
+          });
         }
       }
     });
