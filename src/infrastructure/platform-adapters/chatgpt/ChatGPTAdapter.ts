@@ -12,35 +12,48 @@ export class ChatGPTAdapter extends BasePlatformAdapter {
 
   getSelectors(): PlatformSelectors {
     return {
-      messagesContainer: 'main [class*="react-scroll-to-bottom"]',
+      messagesContainer: 'main',
       userMessage: '[data-message-author-role="user"]',
       assistantMessage: '[data-message-author-role="assistant"]',
-      messageText: '.whitespace-pre-wrap',
-      inputBox: '#prompt-textarea'
+      messageText: '.whitespace-pre-wrap, .markdown, [data-message-author-role] .relative',
+      inputBox: '#prompt-textarea, [contenteditable="true"]'
     };
   }
 
   isUserMessage(element: HTMLElement): boolean {
-    return element.hasAttribute('data-message-author-role') &&
-      element.getAttribute('data-message-author-role') === 'user';
+    if (
+      element.hasAttribute('data-message-author-role') &&
+      element.getAttribute('data-message-author-role') === 'user'
+    ) {
+      return true;
+    }
+    return false;
   }
 
   protected getCustomStyles(): string {
     return `
-      .promptpocket-save-btn {
+      .promptpocket-button-container {
         position: absolute;
-        top: 8px;
-        right: 8px;
+        top: 4px;
+        right: 4px;
+        z-index: 50;
+      }
+
+      .promptpocket-save-btn {
         opacity: 0;
         transition: opacity 0.2s ease;
-        z-index: 10;
-        background: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.95);
         border: 1px solid #e5e7eb;
         border-radius: 6px;
-        padding: 4px 8px;
+        padding: 4px 10px;
         cursor: pointer;
         font-size: 12px;
         color: #374151;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       }
 
       .promptpocket-save-btn:hover {
@@ -49,7 +62,8 @@ export class ChatGPTAdapter extends BasePlatformAdapter {
         color: #3b82f6;
       }
 
-      [data-message-author-role="user"]:hover .promptpocket-save-btn {
+      [data-message-author-role="user"]:hover .promptpocket-save-btn,
+      [data-message-author-role="user"]:hover .promptpocket-button-container .promptpocket-save-btn {
         opacity: 1;
       }
 
@@ -57,7 +71,25 @@ export class ChatGPTAdapter extends BasePlatformAdapter {
         opacity: 1;
         background: #dbeafe;
         color: #1e40af;
-        border-color: #3b82f6;
+        border-color: #93c5fd;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .promptpocket-save-btn {
+          background: rgba(55, 65, 81, 0.95);
+          border-color: #4b5563;
+          color: #d1d5db;
+        }
+        .promptpocket-save-btn:hover {
+          background: #374151;
+          border-color: #60a5fa;
+          color: #60a5fa;
+        }
+        .promptpocket-save-btn.saved {
+          background: #1e3a5f;
+          color: #93c5fd;
+          border-color: #3b82f6;
+        }
       }
     `;
   }
