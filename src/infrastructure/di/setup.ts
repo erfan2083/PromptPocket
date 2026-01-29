@@ -9,6 +9,7 @@ import { SavePromptUseCase } from '@application/use-cases/SavePromptUseCase';
 import { GetAllPromptsUseCase } from '@application/use-cases/GetAllPromptsUseCase';
 import { SearchPromptsUseCase } from '@application/use-cases/SearchPromptsUseCase';
 import { DeletePromptUseCase } from '@application/use-cases/DeletePromptUseCase';
+import { UpdatePromptUseCase } from '@application/use-cases/UpdatePromptUseCase';
 
 export async function setupDI(container: DIContainer): Promise<void> {
   // Storage layer
@@ -61,6 +62,13 @@ export async function setupDI(container: DIContainer): Promise<void> {
 
   container.register('DeletePromptUseCase', () =>
     new DeletePromptUseCase(
+      container.resolve('IPromptRepository'),
+      container.resolve('ISearchIndex')
+    )
+  );
+
+  container.register('UpdatePromptUseCase', () =>
+    new UpdatePromptUseCase(
       container.resolve('IPromptRepository'),
       container.resolve('ISearchIndex')
     )
