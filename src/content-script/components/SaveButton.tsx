@@ -35,10 +35,10 @@ export function SaveButton({ content, platform, url, compact = false }: SaveButt
           console.error('Failed to unsave prompt:', response.error);
         }
       } else {
-        // Save the prompt
+        // Save the prompt with platform name as a tag
         const response = await chrome.runtime.sendMessage({
           type: 'SAVE_PROMPT',
-          payload: { content, platform, url }
+          payload: { content, platform, url, tags: [platform] }
         });
 
         if (response.success) {

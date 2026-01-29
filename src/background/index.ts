@@ -3,6 +3,7 @@ import { SavePromptUseCase } from '@application/use-cases/SavePromptUseCase';
 import { GetAllPromptsUseCase } from '@application/use-cases/GetAllPromptsUseCase';
 import { SearchPromptsUseCase } from '@application/use-cases/SearchPromptsUseCase';
 import { DeletePromptUseCase } from '@application/use-cases/DeletePromptUseCase';
+import { UpdatePromptUseCase } from '@application/use-cases/UpdatePromptUseCase';
 import { ExtensionMessage, ExtensionResponse } from '@shared/types';
 
 console.log('[PromptPocket] Background script loaded');
@@ -89,6 +90,19 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
           hasMore: result.hasMore
         },
         error: result.error,
+        requestId: message.requestId
+      };
+    }
+
+    case 'UPDATE_PROMPT': {
+      const updateUseCase = container.resolve<UpdatePromptUseCase>('UpdatePromptUseCase');
+      const updateResult = await updateUseCase.execute(message.payload);
+      if (updateResult.success) {
+        chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
+      }
+      return {
+        success: updateResult.success,
+        error: updateResult.error,
         requestId: message.requestId
       };
     }

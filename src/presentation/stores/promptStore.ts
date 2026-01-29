@@ -4,6 +4,7 @@ import { getContainer } from '@infrastructure/di';
 import { GetAllPromptsUseCase } from '@application/use-cases/GetAllPromptsUseCase';
 import { SavePromptUseCase } from '@application/use-cases/SavePromptUseCase';
 import { DeletePromptUseCase } from '@application/use-cases/DeletePromptUseCase';
+import { UpdatePromptUseCase, UpdatePromptRequest } from '@application/use-cases/UpdatePromptUseCase';
 import { SavePromptRequest } from '@application/dto/SavePromptRequest';
 
 interface PromptStore {
@@ -14,8 +15,9 @@ interface PromptStore {
   // Actions
   loadPrompts: () => Promise<void>;
   savePrompt: (data: SavePromptRequest) => Promise<void>;
+  updatePrompt: (data: UpdatePromptRequest) => Promise<void>;
   deletePrompt: (id: string) => Promise<void>;
-  
+
   // Selectors
   getPromptById: (id: string) => Prompt | undefined;
   getPromptsByFolder: (folderId: string) => Prompt[];
@@ -38,9 +40,9 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
       set({ prompts: result.prompts, isLoading: false });
     } catch (error) {
       console.error('Failed to load prompts:', error);
-      set({ 
+      set({
         error: error instanceof Error ? error.message : 'Failed to load prompts',
-        isLoading: false 
+        isLoading: false
       });
     }
   },
@@ -56,6 +58,19 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
       await get().loadPrompts();
     } else {
       throw new Error(result.error?.message || 'Failed to save prompt');
+    }
+  },
+
+  updatePrompt: async (data: UpdatePromptRequest) => {
+    const container = getContainer();
+    const useCase = container.resolve<UpdatePromptUseCase>('UpdatePromptUseCase');
+
+    const result = await useCase.execute(data);
+
+    if (result.success) {
+      await get().loadPrompts();
+    } else {
+      throw new Error(result.error || 'Failed to update prompt');
     }
   },
 
