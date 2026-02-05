@@ -6,11 +6,13 @@ import { FuseSearchEngine } from '../search/FuseSearchEngine';
 import { AdapterRegistry } from '../platform-adapters/base/AdapterRegistry';
 import { ChatGPTAdapter } from '../platform-adapters/chatgpt/ChatGPTAdapter';
 import { GeminiAdapter } from '../platform-adapters/gemini/GeminiAdapter';
+import { FirebaseSyncService } from '../sync/FirebaseSyncService';
 import { SavePromptUseCase } from '@application/use-cases/SavePromptUseCase';
 import { GetAllPromptsUseCase } from '@application/use-cases/GetAllPromptsUseCase';
 import { SearchPromptsUseCase } from '@application/use-cases/SearchPromptsUseCase';
 import { DeletePromptUseCase } from '@application/use-cases/DeletePromptUseCase';
 import { UpdatePromptUseCase } from '@application/use-cases/UpdatePromptUseCase';
+import { SyncPromptsUseCase } from '@application/use-cases/SyncPromptsUseCase';
 
 export async function setupDI(container: DIContainer): Promise<void> {
   // Storage layer
@@ -40,6 +42,9 @@ export async function setupDI(container: DIContainer): Promise<void> {
     // Future: registry.register(new ClaudeAdapter());
     return registry;
   });
+
+  // Sync service
+  container.registerSingleton('ISyncService', () => new FirebaseSyncService());
 
   // Use cases
   container.register('SavePromptUseCase', () =>
@@ -73,6 +78,15 @@ export async function setupDI(container: DIContainer): Promise<void> {
     new UpdatePromptUseCase(
       container.resolve('IPromptRepository'),
       container.resolve('ISearchIndex')
+    )
+  );
+
+  container.register('SyncPromptsUseCase', () =>
+    new SyncPromptsUseCase(
+      container.resolve('IPromptRepository'),
+      container.resolve('IFolderRepository'),
+      container.resolve('ISearchIndex'),
+      container.resolve('ISyncService')
     )
   );
 

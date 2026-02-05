@@ -4,6 +4,8 @@ import { GetAllPromptsUseCase } from '@application/use-cases/GetAllPromptsUseCas
 import { SearchPromptsUseCase } from '@application/use-cases/SearchPromptsUseCase';
 import { DeletePromptUseCase } from '@application/use-cases/DeletePromptUseCase';
 import { UpdatePromptUseCase } from '@application/use-cases/UpdatePromptUseCase';
+import { SyncPromptsUseCase } from '@application/use-cases/SyncPromptsUseCase';
+import { FirebaseSyncService } from '@infrastructure/sync/FirebaseSyncService';
 import { ExtensionMessage, ExtensionResponse } from '@shared/types';
 
 console.log('[PromptPocket] Background script loaded');
@@ -13,7 +15,7 @@ let isInitialized = false;
 
 async function initialize() {
   if (isInitialized) return;
-  
+
   try {
     const container = getContainer();
     await setupDI(container);
@@ -59,6 +61,20 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
       const result = await useCase.execute(message.payload);
       if (result.success) {
         chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
+        // Push to cloud sync if enabled
+        try {
+          const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
+          if (result.promptId) {
+            const getAllUseCase = container.resolve<GetAllPromptsUseCase>('GetAllPromptsUseCase');
+            const allResult = await getAllUseCase.execute();
+            const saved = allResult.prompts.find((p) => p.id.value === result.promptId);
+            if (saved) {
+              await syncUseCase.pushPrompt(saved.toDTO());
+            }
+          }
+        } catch {
+          // Sync errors shouldn't block the save response
+        }
       }
       return {
         success: result.success,
@@ -99,6 +115,18 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
       const updateResult = await updateUseCase.execute(message.payload);
       if (updateResult.success) {
         chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
+        // Push updated prompt to cloud
+        try {
+          const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
+          const getAllUseCase = container.resolve<GetAllPromptsUseCase>('GetAllPromptsUseCase');
+          const allResult = await getAllUseCase.execute();
+          const updated = allResult.prompts.find((p) => p.id.value === message.payload.id);
+          if (updated) {
+            await syncUseCase.pushPrompt(updated.toDTO());
+          }
+        } catch {
+          // Sync errors shouldn't block the update response
+        }
       }
       return {
         success: updateResult.success,
@@ -112,11 +140,78 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
       const result = await useCase.execute(message.payload.id);
       if (result.success) {
         chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
+        // Remove from cloud
+        try {
+          const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
+          await syncUseCase.removePrompt(message.payload.id);
+        } catch {
+          // Sync errors shouldn't block the delete response
+        }
       }
       return {
         success: result.success,
         error: result.error,
         requestId: message.requestId
+      };
+    }
+
+    case 'SYNC_SIGN_IN': {
+      const syncService = container.resolve<FirebaseSyncService>('ISyncService');
+      try {
+        await syncService.initialize(message.payload.email);
+        await syncService.signIn(message.payload.email, message.payload.password);
+
+        // Perform initial full sync
+        const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
+        const syncResult = await syncUseCase.execute();
+
+        if (syncResult.success) {
+          chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
+        }
+
+        return {
+          success: true,
+          data: { syncResult: syncResult.result, status: syncService.getStatus() },
+          requestId: message.requestId,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Sign in failed',
+          requestId: message.requestId,
+        };
+      }
+    }
+
+    case 'SYNC_SIGN_OUT': {
+      const syncService = container.resolve<FirebaseSyncService>('ISyncService');
+      await syncService.disconnect();
+      return {
+        success: true,
+        requestId: message.requestId,
+      };
+    }
+
+    case 'SYNC_NOW': {
+      const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
+      const syncResult = await syncUseCase.execute();
+      if (syncResult.success) {
+        chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
+      }
+      return {
+        success: syncResult.success,
+        data: syncResult.result,
+        error: syncResult.error,
+        requestId: message.requestId,
+      };
+    }
+
+    case 'SYNC_STATUS': {
+      const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
+      return {
+        success: true,
+        data: syncUseCase.getStatus(),
+        requestId: message.requestId,
       };
     }
 

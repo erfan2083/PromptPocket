@@ -4,6 +4,7 @@ import { Prompt } from '@domain/entities/Prompt';
 import {
   Search, Plus, BookOpen, X, Trash2, Copy, Check, ArrowLeft, Pencil, Calendar, BarChart3,
 } from 'lucide-react';
+import SyncPanel from '../components/SyncPanel';
 
 export default function Library() {
   const { prompts, isLoading, error, loadPrompts, savePrompt, updatePrompt, deletePrompt } =
@@ -508,6 +509,9 @@ export default function Library() {
           </div>
         )}
       </main>
+
+      {/* Cloud Sync */}
+      <SyncPanel />
 
       {/* Stats Footer */}
       <footer className="border-t border-border px-6 py-3 text-sm text-muted-foreground">

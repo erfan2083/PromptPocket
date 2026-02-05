@@ -13,7 +13,11 @@ export type MessageType =
   | 'GET_FOLDERS'
   | 'CREATE_FOLDER'
   | 'UPDATE_FOLDER'
-  | 'DELETE_FOLDER';
+  | 'DELETE_FOLDER'
+  | 'SYNC_SIGN_IN'
+  | 'SYNC_SIGN_OUT'
+  | 'SYNC_NOW'
+  | 'SYNC_STATUS';
 
 export interface ExtensionMessage<T = any> {
   type: MessageType;
