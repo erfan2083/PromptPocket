@@ -12,7 +12,8 @@ import {
   Unsubscribe,
 } from 'firebase/firestore';
 import {
-  getAuth,
+  initializeAuth,
+  getReactNativePersistence,
   Auth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -22,6 +23,7 @@ import {
   onAuthStateChanged,
   User,
 } from 'firebase/auth';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 import { PromptDTO, FolderDTO } from '../types';
 import { firebaseConfig, isFirebaseConfigured } from './firebase-config';
 
@@ -39,7 +41,9 @@ export function initializeFirebase(): { app: FirebaseApp; db: Firestore; auth: A
   if (!app) {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
-    auth = getAuth(app);
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+    });
 
     onAuthStateChanged(auth, (user) => {
       currentUser = user;

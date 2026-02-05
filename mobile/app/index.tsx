@@ -9,7 +9,7 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../src/stores/authStore';
 import { usePromptStore } from '../src/stores/promptStore';
@@ -22,11 +22,9 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/login');
-      return;
+    if (isAuthenticated) {
+      loadPrompts();
     }
-    loadPrompts();
   }, [isAuthenticated]);
 
   const onRefresh = useCallback(async () => {
@@ -74,7 +72,7 @@ export default function HomeScreen() {
   );
 
   if (!isAuthenticated) {
-    return null;
+    return <Redirect href="/login" />;
   }
 
   return (
