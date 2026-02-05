@@ -8,6 +8,7 @@ interface SyncState {
   email: string | null;
 
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   syncNow: () => Promise<void>;
   checkStatus: () => Promise<void>;
@@ -43,6 +44,33 @@ export const useSyncStore = create<SyncState>((set) => ({
       set({
         isSyncing: false,
         error: error instanceof Error ? error.message : 'Sign in failed',
+      });
+    }
+  },
+
+  signInWithGoogle: async () => {
+    set({ isSyncing: true, error: null });
+    try {
+      const response = await chrome.runtime.sendMessage({
+        type: 'SYNC_GOOGLE_SIGN_IN',
+        payload: {},
+      });
+
+      if (response.success) {
+        set({
+          isSignedIn: true,
+          isSyncing: false,
+          lastSyncAt: Date.now(),
+          email: response.data?.email || 'Google Account',
+          error: null,
+        });
+      } else {
+        set({ isSyncing: false, error: response.error || 'Google sign in failed' });
+      }
+    } catch (error) {
+      set({
+        isSyncing: false,
+        error: error instanceof Error ? error.message : 'Google sign in failed',
       });
     }
   },

@@ -1,23 +1,8 @@
 /**
- * Firebase Configuration
+ * Firebase Configuration - loaded from environment variables.
  *
- * To enable cloud sync between the extension and mobile app:
- * 1. Create a Firebase project at https://console.firebase.google.com
- * 2. Enable Firestore Database (start in test mode or configure rules)
- * 3. Enable Authentication → Email/Password provider
- * 4. Copy your web app config below
- *
- * Firestore Security Rules (recommended):
- * ```
- * rules_version = '2';
- * service cloud.firestore {
- *   match /databases/{database}/documents {
- *     match /users/{userId}/{document=**} {
- *       allow read, write: if request.auth != null && request.auth.uid == userId;
- *     }
- *   }
- * }
- * ```
+ * Create a `.env` file in the project root with your Firebase config.
+ * See `.env.example` for the required variables.
  */
 
 export interface FirebaseConfig {
@@ -29,15 +14,16 @@ export interface FirebaseConfig {
   appId: string;
 }
 
-// Replace with your Firebase project configuration
 export const firebaseConfig: FirebaseConfig = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: '',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
 };
+
+export const googleClientId: string = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 export function isFirebaseConfigured(): boolean {
   return (

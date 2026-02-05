@@ -16,6 +16,8 @@ import {
   Auth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithCredential,
+  GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
   User,
@@ -103,12 +105,38 @@ export class FirebaseSyncService implements ISyncService {
     }
   }
 
+  async signInWithGoogle(): Promise<void> {
+    if (!this.auth) throw new Error('Sync not initialized');
+
+    // Use chrome.identity to get a Google OAuth token
+    const token = await new Promise<string>((resolve, reject) => {
+      chrome.identity.getAuthToken({ interactive: true }, (token) => {
+        if (chrome.runtime.lastError || !token) {
+          reject(new Error(chrome.runtime.lastError?.message || 'Failed to get auth token'));
+        } else {
+          resolve(token);
+        }
+      });
+    });
+
+    // Exchange the token for a Firebase credential
+    const credential = GoogleAuthProvider.credential(null, token);
+    const result = await signInWithCredential(this.auth, credential);
+    this.user = result.user;
+    this._status.enabled = true;
+    this._status.error = null;
+  }
+
   isEnabled(): boolean {
     return this._status.enabled && this.user !== null;
   }
 
   getStatus(): SyncStatus {
     return { ...this._status };
+  }
+
+  getUserEmail(): string | null {
+    return this.user?.email || null;
   }
 
   private getUserId(): string {
