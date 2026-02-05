@@ -17,6 +17,9 @@ export const firebaseConfig = {
 };
 
 export const googleClientId: string = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
+export const googleAndroidClientId: string =
+  process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '';
+export const googleIosClientId: string = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
 
 export function isFirebaseConfigured(): boolean {
   return (
