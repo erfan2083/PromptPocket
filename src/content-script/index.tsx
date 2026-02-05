@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { AdapterRegistry } from '@infrastructure/platform-adapters/base/AdapterRegistry';
 import { ChatGPTAdapter } from '@infrastructure/platform-adapters/chatgpt/ChatGPTAdapter';
+import { GeminiAdapter } from '@infrastructure/platform-adapters/gemini/GeminiAdapter';
 import { SaveButton } from './components/SaveButton';
 import './styles.css';
 
@@ -14,6 +15,7 @@ class ContentScriptApp {
   constructor() {
     this.registry = new AdapterRegistry();
     this.registry.register(new ChatGPTAdapter());
+    this.registry.register(new GeminiAdapter());
   }
 
   async init() {
