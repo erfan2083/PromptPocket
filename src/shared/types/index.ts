@@ -15,6 +15,7 @@ export type MessageType =
   | 'UPDATE_FOLDER'
   | 'DELETE_FOLDER'
   | 'SYNC_SIGN_IN'
+  | 'SYNC_GOOGLE_SIGN_IN'
   | 'SYNC_SIGN_OUT'
   | 'SYNC_NOW'
   | 'SYNC_STATUS';

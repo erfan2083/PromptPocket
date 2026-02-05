@@ -16,6 +16,8 @@ import {
   Auth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithCredential,
+  GoogleAuthProvider,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User,
@@ -86,6 +88,14 @@ export async function signIn(email: string, password: string): Promise<User> {
     }
     throw error;
   }
+}
+
+export async function signInWithGoogle(idToken: string): Promise<User> {
+  const { auth: firebaseAuth } = initializeFirebase();
+  const credential = GoogleAuthProvider.credential(idToken);
+  const result = await signInWithCredential(firebaseAuth, credential);
+  currentUser = result.user;
+  return result.user;
 }
 
 export async function signOut(): Promise<void> {

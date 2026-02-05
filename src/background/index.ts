@@ -183,6 +183,37 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
       }
     }
 
+    case 'SYNC_GOOGLE_SIGN_IN': {
+      const syncService = container.resolve<FirebaseSyncService>('ISyncService');
+      try {
+        await syncService.initialize('google');
+        await syncService.signInWithGoogle();
+
+        const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
+        const syncResult = await syncUseCase.execute();
+
+        if (syncResult.success) {
+          chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
+        }
+
+        return {
+          success: true,
+          data: {
+            email: syncService.getUserEmail(),
+            syncResult: syncResult.result,
+            status: syncService.getStatus(),
+          },
+          requestId: message.requestId,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Google sign in failed',
+          requestId: message.requestId,
+        };
+      }
+    }
+
     case 'SYNC_SIGN_OUT': {
       const syncService = container.resolve<FirebaseSyncService>('ISyncService');
       await syncService.disconnect();
