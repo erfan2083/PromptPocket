@@ -5,6 +5,7 @@ import { IndexedDBFolderRepository } from '../repositories/IndexedDBFolderReposi
 import { FuseSearchEngine } from '../search/FuseSearchEngine';
 import { AdapterRegistry } from '../platform-adapters/base/AdapterRegistry';
 import { ChatGPTAdapter } from '../platform-adapters/chatgpt/ChatGPTAdapter';
+import { GeminiAdapter } from '../platform-adapters/gemini/GeminiAdapter';
 import { SavePromptUseCase } from '@application/use-cases/SavePromptUseCase';
 import { GetAllPromptsUseCase } from '@application/use-cases/GetAllPromptsUseCase';
 import { SearchPromptsUseCase } from '@application/use-cases/SearchPromptsUseCase';
@@ -35,6 +36,7 @@ export async function setupDI(container: DIContainer): Promise<void> {
   container.registerSingleton('AdapterRegistry', () => {
     const registry = new AdapterRegistry();
     registry.register(new ChatGPTAdapter());
+    registry.register(new GeminiAdapter());
     // Future: registry.register(new ClaudeAdapter());
     return registry;
   });
