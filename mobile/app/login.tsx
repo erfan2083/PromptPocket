@@ -12,7 +12,6 @@ import {
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
 import { useAuthStore } from '../src/stores/authStore';
 import {
   googleClientId,
@@ -28,16 +27,10 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const redirectUri = makeRedirectUri({
-    scheme: 'promptpocket',
-    path: 'redirect',
-  });
-
   const [_request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: googleClientId,
     androidClientId: googleAndroidClientId || undefined,
     iosClientId: googleIosClientId || undefined,
-    redirectUri,
   });
 
   useEffect(() => {
