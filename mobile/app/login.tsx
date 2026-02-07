@@ -10,17 +10,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { useAuthStore } from '../src/stores/authStore';
-import {
-  googleClientId,
-  googleAndroidClientId,
-  googleIosClientId,
-} from '../src/services/firebase-config';
-
-WebBrowser.maybeCompleteAuthSession();
+import { googleClientId } from '../src/services/firebase-config';
 
 export default function LoginScreen() {
   const { signIn, signInWithGoogle, isLoading, error } = useAuthStore();
@@ -28,33 +20,11 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const redirectUri = makeRedirectUri({
-    scheme: 'promptpocket',
-    path: 'redirect',
-  });
-
-  const [_request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: googleClientId,
-    androidClientId: googleAndroidClientId || undefined,
-    iosClientId: googleIosClientId || undefined,
-    redirectUri,
-  });
-
   useEffect(() => {
-    if (response?.type === 'success') {
-      const { id_token } = response.params;
-      handleGoogleToken(id_token);
-    }
-  }, [response]);
-
-  const handleGoogleToken = async (idToken: string) => {
-    try {
-      await signInWithGoogle(idToken);
-      router.replace('/');
-    } catch {
-      // Error handled by store
-    }
-  };
+    GoogleSignin.configure({
+      webClientId: googleClientId,
+    });
+  }, []);
 
   const handleSignIn = async () => {
     if (!email.trim()) {
@@ -81,7 +51,27 @@ export default function LoginScreen() {
       setLocalError('Google sign-in is not configured. Set EXPO_PUBLIC_GOOGLE_CLIENT_ID in .env');
       return;
     }
-    await promptAsync();
+    try {
+      await GoogleSignin.hasPlayServices();
+      const result = await GoogleSignin.signIn();
+      const idToken = result.data?.idToken;
+      if (idToken) {
+        await signInWithGoogle(idToken);
+        router.replace('/');
+      } else {
+        setLocalError('Failed to get ID token from Google');
+      }
+    } catch (err: any) {
+      if (err.code === statusCodes.SIGN_IN_CANCELLED) {
+        // User cancelled - do nothing
+      } else if (err.code === statusCodes.IN_PROGRESS) {
+        setLocalError('Sign-in already in progress');
+      } else if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        setLocalError('Google Play Services not available');
+      } else {
+        setLocalError(err.message || 'Google sign-in failed');
+      }
+    }
   };
 
   return (
