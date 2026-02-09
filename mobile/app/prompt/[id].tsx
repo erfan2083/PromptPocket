@@ -56,8 +56,9 @@ export default function PromptDetailScreen() {
         {/* Platform */}
         {prompt.metadata.source.platform !== 'unknown' && (
           <View style={styles.platformRow}>
-            <Text style={styles.platformLabel}>Source:</Text>
-            <Text style={styles.platformValue}>{prompt.metadata.source.platform}</Text>
+            <View style={styles.platformBadge}>
+              <Text style={styles.platformText}>{prompt.metadata.source.platform}</Text>
+            </View>
           </View>
         )}
 
@@ -65,7 +66,7 @@ export default function PromptDetailScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Content</Text>
           <View style={styles.contentBox}>
-            <Text style={styles.contentText}>{prompt.content}</Text>
+            <Text style={styles.contentText} selectable>{prompt.content}</Text>
           </View>
         </View>
 
@@ -74,8 +75,8 @@ export default function PromptDetailScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Tags</Text>
             <View style={styles.tagsRow}>
-              {prompt.tags.map((tag) => (
-                <View key={tag} style={styles.tag}>
+              {prompt.tags.map((tag, index) => (
+                <View key={`${tag}-${index}`} style={styles.tag}>
                   <Text style={styles.tagText}>{tag}</Text>
                 </View>
               ))}
@@ -86,21 +87,21 @@ export default function PromptDetailScreen() {
         {/* Metadata */}
         <View style={styles.section}>
           <View style={styles.metaRow}>
-            <Ionicons name="calendar-outline" size={14} color="#888" />
+            <Ionicons name="calendar-outline" size={13} color="#64748b" />
             <Text style={styles.metaText}>
               Created: {new Date(prompt.metadata.createdAt).toLocaleString()}
             </Text>
           </View>
           {prompt.metadata.updatedAt !== prompt.metadata.createdAt && (
             <View style={styles.metaRow}>
-              <Ionicons name="calendar-outline" size={14} color="#888" />
+              <Ionicons name="calendar-outline" size={13} color="#64748b" />
               <Text style={styles.metaText}>
                 Updated: {new Date(prompt.metadata.updatedAt).toLocaleString()}
               </Text>
             </View>
           )}
           <View style={styles.metaRow}>
-            <Ionicons name="bar-chart-outline" size={14} color="#888" />
+            <Ionicons name="bar-chart-outline" size={13} color="#64748b" />
             <Text style={styles.metaText}>Used {prompt.stats.usedCount} times</Text>
           </View>
         </View>
@@ -108,12 +109,14 @@ export default function PromptDetailScreen() {
 
       {/* Action Bar */}
       <View style={styles.actionBar}>
-        <TouchableOpacity style={styles.actionBtn} onPress={handleCopy}>
-          <Ionicons
-            name={copied ? 'checkmark-circle' : 'copy-outline'}
-            size={20}
-            color={copied ? '#4ade80' : '#e0e0e0'}
-          />
+        <TouchableOpacity style={styles.actionBtn} onPress={handleCopy} activeOpacity={0.7}>
+          <View style={[styles.actionIconWrap, copied && styles.actionIconSuccess]}>
+            <Ionicons
+              name={copied ? 'checkmark' : 'copy-outline'}
+              size={18}
+              color={copied ? '#fff' : '#e2e8f0'}
+            />
+          </View>
           <Text style={[styles.actionText, copied && styles.actionTextSuccess]}>
             {copied ? 'Copied' : 'Copy'}
           </Text>
@@ -122,14 +125,19 @@ export default function PromptDetailScreen() {
         <TouchableOpacity
           style={styles.actionBtn}
           onPress={() => router.push(`/prompt/edit/${prompt.id}`)}
+          activeOpacity={0.7}
         >
-          <Ionicons name="pencil-outline" size={20} color="#e0e0e0" />
+          <View style={styles.actionIconWrap}>
+            <Ionicons name="pencil-outline" size={18} color="#e2e8f0" />
+          </View>
           <Text style={styles.actionText}>Edit</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionBtn} onPress={handleDelete}>
-          <Ionicons name="trash-outline" size={20} color="#ff6b6b" />
-          <Text style={[styles.actionText, { color: '#ff6b6b' }]}>Delete</Text>
+        <TouchableOpacity style={styles.actionBtn} onPress={handleDelete} activeOpacity={0.7}>
+          <View style={[styles.actionIconWrap, styles.actionIconDanger]}>
+            <Ionicons name="trash-outline" size={18} color="#ef4444" />
+          </View>
+          <Text style={[styles.actionText, styles.actionTextDanger]}>Delete</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -139,7 +147,7 @@ export default function PromptDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#16213e',
+    backgroundColor: '#0f172a',
   },
   scroll: {
     flex: 1,
@@ -149,48 +157,50 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#e0e0e0',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#e2e8f0',
     marginBottom: 12,
+    lineHeight: 28,
   },
   platformRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
     marginBottom: 16,
   },
-  platformLabel: {
-    fontSize: 12,
-    color: '#888',
+  platformBadge: {
+    backgroundColor: 'rgba(124, 108, 255, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
   },
-  platformValue: {
-    fontSize: 12,
-    color: '#6c63ff',
+  platformText: {
+    fontSize: 11,
+    color: '#7c6cff',
     fontWeight: '600',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   section: {
     marginBottom: 20,
   },
   sectionLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#888',
+    color: '#64748b',
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   contentBox: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
+    backgroundColor: '#1e293b',
+    borderRadius: 10,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#2a2a4e',
+    borderColor: '#334155',
   },
   contentText: {
     fontSize: 14,
-    color: '#d0d0d0',
+    color: '#cbd5e1',
     lineHeight: 22,
   },
   tagsRow: {
@@ -199,14 +209,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tag: {
-    backgroundColor: '#2a2a4e',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    backgroundColor: 'rgba(124, 108, 255, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
   },
   tagText: {
-    fontSize: 13,
-    color: '#a0a0ff',
+    fontSize: 12,
+    color: '#a5b4fc',
+    fontWeight: '500',
   },
   metaRow: {
     flexDirection: 'row',
@@ -216,25 +227,44 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    color: '#888',
+    color: '#64748b',
   },
   actionBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderTopWidth: 1,
-    borderTopColor: '#2a2a4e',
-    backgroundColor: '#1a1a2e',
+    borderTopColor: '#1e293b',
+    backgroundColor: '#0f172a',
   },
   actionBtn: {
     alignItems: 'center',
     gap: 4,
   },
+  actionIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#1e293b',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionIconSuccess: {
+    backgroundColor: '#22c55e',
+  },
+  actionIconDanger: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  },
   actionText: {
-    fontSize: 12,
-    color: '#e0e0e0',
+    fontSize: 11,
+    color: '#94a3b8',
+    fontWeight: '500',
   },
   actionTextSuccess: {
-    color: '#4ade80',
+    color: '#22c55e',
+  },
+  actionTextDanger: {
+    color: '#ef4444',
   },
 });

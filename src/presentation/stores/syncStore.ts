@@ -129,6 +129,7 @@ export const useSyncStore = create<SyncState>((set) => ({
           isSyncing: response.data.isSyncing,
           lastSyncAt: response.data.lastSyncAt,
           error: response.data.error,
+          email: response.data.email || null,
         });
       }
     } catch {

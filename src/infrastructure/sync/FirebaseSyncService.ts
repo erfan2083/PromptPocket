@@ -1,4 +1,4 @@
-import { initializeApp, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApp, FirebaseApp } from 'firebase/app';
 import {
   getFirestore,
   Firestore,
@@ -40,7 +40,9 @@ export class FirebaseSyncService implements ISyncService {
   };
   private unsubscribers: Unsubscribe[] = [];
 
-  async initialize(userId: string): Promise<void> {
+  private ensureFirebaseInitialized(): void {
+    if (this.app && this.db && this.auth) return;
+
     if (!isFirebaseConfigured()) {
       throw new Error(
         'Firebase is not configured. Please add your Firebase config in firebase-config.ts'
@@ -48,21 +50,46 @@ export class FirebaseSyncService implements ISyncService {
     }
 
     try {
+      this.app = getApp();
+    } catch {
       this.app = initializeApp(firebaseConfig);
-      this.db = getFirestore(this.app);
-      this.auth = getAuth(this.app);
+    }
+    this.db = getFirestore(this.app);
+    this.auth = getAuth(this.app);
+  }
 
-      // Wait for auth state
-      await new Promise<void>((resolve, reject) => {
-        if (!this.auth) return reject(new Error('Auth not initialized'));
-        const unsub = onAuthStateChanged(this.auth, (user) => {
-          this.user = user;
-          unsub();
-          resolve();
-        });
+  private async waitForAuthState(): Promise<User | null> {
+    if (!this.auth) return null;
+    return new Promise<User | null>((resolve) => {
+      const unsub = onAuthStateChanged(this.auth!, (user) => {
+        unsub();
+        resolve(user);
       });
+    });
+  }
 
-      // If not signed in, store userId for later auth
+  private async persistSyncState(email: string | null): Promise<void> {
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      await chrome.storage.local.set({
+        syncEnabled: true,
+        syncEmail: email || '',
+      });
+    }
+  }
+
+  private async clearSyncState(): Promise<void> {
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      await chrome.storage.local.remove(['syncEnabled', 'syncEmail', 'syncUserId']);
+    }
+  }
+
+  async initialize(userId: string): Promise<void> {
+    try {
+      this.ensureFirebaseInitialized();
+
+      const user = await this.waitForAuthState();
+      this.user = user;
+
       if (!this.user) {
         console.log('[PromptPocket Sync] No user signed in. Call signIn() to authenticate.');
       }
@@ -73,13 +100,42 @@ export class FirebaseSyncService implements ISyncService {
         error: null,
       };
 
-      // Store userId in chrome storage for persistence
-      if (typeof chrome !== 'undefined' && chrome.storage) {
-        chrome.storage.local.set({ syncUserId: userId });
-      }
+      await this.persistSyncState(userId);
     } catch (error) {
       this._status.error = error instanceof Error ? error.message : 'Failed to initialize sync';
       throw error;
+    }
+  }
+
+  /**
+   * Restore sync session from persisted Firebase auth state.
+   * Called on background script startup to auto-reconnect.
+   */
+  async restore(): Promise<boolean> {
+    if (!isFirebaseConfigured()) return false;
+
+    try {
+      this.ensureFirebaseInitialized();
+
+      const user = await this.waitForAuthState();
+
+      if (user) {
+        this.user = user;
+        this._status = {
+          enabled: true,
+          lastSyncAt: null,
+          isSyncing: false,
+          error: null,
+        };
+        console.log('[PromptPocket Sync] Session restored for:', user.email);
+        return true;
+      }
+
+      console.log('[PromptPocket Sync] No persisted session found.');
+      return false;
+    } catch (error) {
+      console.error('[PromptPocket Sync] Restore failed:', error);
+      return false;
     }
   }
 
@@ -91,6 +147,7 @@ export class FirebaseSyncService implements ISyncService {
       this.user = credential.user;
       this._status.enabled = true;
       this._status.error = null;
+      await this.persistSyncState(email);
     } catch (error: unknown) {
       // If user doesn't exist, create account
       const firebaseError = error as { code?: string };
@@ -99,6 +156,7 @@ export class FirebaseSyncService implements ISyncService {
         this.user = credential.user;
         this._status.enabled = true;
         this._status.error = null;
+        await this.persistSyncState(email);
       } else {
         throw error;
       }
@@ -125,6 +183,7 @@ export class FirebaseSyncService implements ISyncService {
     this.user = result.user;
     this._status.enabled = true;
     this._status.error = null;
+    await this.persistSyncState(result.user.email);
   }
 
   isEnabled(): boolean {
@@ -318,8 +377,6 @@ export class FirebaseSyncService implements ISyncService {
       error: null,
     };
 
-    if (typeof chrome !== 'undefined' && chrome.storage) {
-      chrome.storage.local.remove(['syncUserId', 'syncEmail']);
-    }
+    await this.clearSyncState();
   }
 }

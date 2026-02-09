@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../src/stores/authStore';
 import { googleClientId } from '../src/services/firebase-config';
 
@@ -80,10 +81,16 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.inner}>
-        <Text style={styles.title}>PromptPocket</Text>
-        <Text style={styles.subtitle}>
-          Sign in with the same account you use in the Chrome extension to sync your prompts.
-        </Text>
+        {/* Logo area */}
+        <View style={styles.logoContainer}>
+          <View style={styles.logoIcon}>
+            <Ionicons name="book" size={32} color="#7c6cff" />
+          </View>
+          <Text style={styles.title}>PromptPocket</Text>
+          <Text style={styles.subtitle}>
+            Sign in with the same account you use in the Chrome extension to sync your prompts.
+          </Text>
+        </View>
 
         {/* Google Sign-In */}
         <TouchableOpacity
@@ -113,7 +120,7 @@ export default function LoginScreen() {
         <TextInput
           style={styles.input}
           placeholder="Email"
-          placeholderTextColor="#888"
+          placeholderTextColor="#475569"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -124,7 +131,7 @@ export default function LoginScreen() {
         <TextInput
           style={styles.input}
           placeholder="Password"
-          placeholderTextColor="#888"
+          placeholderTextColor="#475569"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -140,6 +147,7 @@ export default function LoginScreen() {
           style={[styles.button, isLoading && styles.buttonDisabled]}
           onPress={handleSignIn}
           disabled={isLoading}
+          activeOpacity={0.8}
         >
           {isLoading ? (
             <ActivityIndicator color="#fff" />
@@ -159,25 +167,36 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#16213e',
+    backgroundColor: '#0f172a',
   },
   inner: {
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  logoIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: 'rgba(124, 108, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#e0e0e0',
-    textAlign: 'center',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#e2e8f0',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#a0a0a0',
+    color: '#64748b',
     textAlign: 'center',
-    marginBottom: 24,
     lineHeight: 20,
   },
   googleButton: {
@@ -185,7 +204,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 10,
     padding: 14,
     gap: 10,
   },
@@ -196,7 +215,7 @@ const styles = StyleSheet.create({
   },
   googleButtonText: {
     color: '#333',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   dividerRow: {
@@ -208,31 +227,31 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#2a2a4e',
+    backgroundColor: '#334155',
   },
   dividerText: {
-    color: '#666',
+    color: '#475569',
     fontSize: 13,
   },
   input: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#1e293b',
     borderWidth: 1,
-    borderColor: '#2a2a4e',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#e0e0e0',
+    borderColor: '#334155',
+    borderRadius: 10,
+    padding: 14,
+    fontSize: 15,
+    color: '#e2e8f0',
     marginBottom: 12,
   },
   error: {
-    color: '#ff6b6b',
+    color: '#ef4444',
     fontSize: 13,
     marginBottom: 12,
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#6c63ff',
-    borderRadius: 12,
+    backgroundColor: '#7c6cff',
+    borderRadius: 10,
     padding: 16,
     alignItems: 'center',
     marginTop: 4,
@@ -242,12 +261,12 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '600',
   },
   hint: {
     fontSize: 12,
-    color: '#555',
+    color: '#475569',
     textAlign: 'center',
     marginTop: 16,
     fontStyle: 'italic',

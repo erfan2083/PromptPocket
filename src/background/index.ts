@@ -12,6 +12,7 @@ console.log('[PromptPocket] Background script loaded');
 
 // Initialize DI container
 let isInitialized = false;
+let realtimeUnsubscribe: (() => void) | null = null;
 
 async function initialize() {
   if (isInitialized) return;
@@ -21,8 +22,79 @@ async function initialize() {
     await setupDI(container);
     isInitialized = true;
     console.log('[PromptPocket] Background initialized');
+
+    // Try to restore sync session from persisted state
+    await restoreSyncSession();
   } catch (error) {
     console.error('[PromptPocket] Initialization error:', error);
+  }
+}
+
+/**
+ * Attempt to restore a previous sync session on startup.
+ * Checks chrome.storage.local for a persisted sync flag, then
+ * re-initializes Firebase and restores the auth session.
+ */
+async function restoreSyncSession() {
+  try {
+    const stored = await chrome.storage.local.get(['syncEnabled', 'syncEmail']);
+    if (!stored.syncEnabled) return;
+
+    const container = getContainer();
+    const syncService = container.resolve<FirebaseSyncService>('ISyncService');
+    const restored = await syncService.restore();
+
+    if (restored) {
+      console.log('[PromptPocket] Sync session restored, starting full sync and listeners');
+      // Perform a full sync to catch up on any changes while offline
+      const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
+      const syncResult = await syncUseCase.execute();
+      if (syncResult.success) {
+        chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
+      }
+      // Start real-time listeners
+      startRealtimeListeners();
+    } else {
+      // Firebase couldn't restore the session - clear the persisted state
+      await chrome.storage.local.remove(['syncEnabled', 'syncEmail']);
+    }
+  } catch (error) {
+    console.error('[PromptPocket] Failed to restore sync session:', error);
+  }
+}
+
+/**
+ * Start real-time Firestore listeners that sync remote changes
+ * (add, modify, delete) back into local IndexedDB.
+ */
+function startRealtimeListeners() {
+  // Clean up any existing listeners first
+  if (realtimeUnsubscribe) {
+    realtimeUnsubscribe();
+    realtimeUnsubscribe = null;
+  }
+
+  try {
+    const container = getContainer();
+    const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
+    realtimeUnsubscribe = syncUseCase.startRealtimeSync(() => {
+      // Notify side panel that prompts changed (from a remote device)
+      chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
+    });
+    console.log('[PromptPocket] Real-time sync listeners started');
+  } catch (error) {
+    console.error('[PromptPocket] Failed to start real-time listeners:', error);
+  }
+}
+
+/**
+ * Stop real-time Firestore listeners.
+ */
+function stopRealtimeListeners() {
+  if (realtimeUnsubscribe) {
+    realtimeUnsubscribe();
+    realtimeUnsubscribe = null;
+    console.log('[PromptPocket] Real-time sync listeners stopped');
   }
 }
 
@@ -169,6 +241,9 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
           chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
         }
 
+        // Start real-time listeners for bidirectional sync
+        startRealtimeListeners();
+
         return {
           success: true,
           data: { syncResult: syncResult.result, status: syncService.getStatus() },
@@ -196,6 +271,9 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
           chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
         }
 
+        // Start real-time listeners for bidirectional sync
+        startRealtimeListeners();
+
         return {
           success: true,
           data: {
@@ -216,6 +294,7 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
 
     case 'SYNC_SIGN_OUT': {
       const syncService = container.resolve<FirebaseSyncService>('ISyncService');
+      stopRealtimeListeners();
       await syncService.disconnect();
       return {
         success: true,
@@ -238,10 +317,14 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
     }
 
     case 'SYNC_STATUS': {
-      const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
+      const syncService = container.resolve<FirebaseSyncService>('ISyncService');
+      const status = syncService.getStatus();
       return {
         success: true,
-        data: syncUseCase.getStatus(),
+        data: {
+          ...status,
+          email: syncService.getUserEmail(),
+        },
         requestId: message.requestId,
       };
     }

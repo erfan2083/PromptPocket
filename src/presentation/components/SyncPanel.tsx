@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSyncStore } from '../stores/syncStore';
 import { Cloud, CloudOff, RefreshCw, LogOut, Smartphone } from 'lucide-react';
 
@@ -13,11 +13,17 @@ export default function SyncPanel() {
     signInWithGoogle,
     signOut,
     syncNow,
+    checkStatus,
   } = useSyncStore();
   const [showForm, setShowForm] = useState(false);
   const [formEmail, setFormEmail] = useState('');
   const [formPassword, setFormPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Check sync status on mount to restore persisted state
+  useEffect(() => {
+    checkStatus();
+  }, [checkStatus]);
 
   const handleSignIn = async () => {
     if (!formEmail.trim() || !formPassword.trim()) {

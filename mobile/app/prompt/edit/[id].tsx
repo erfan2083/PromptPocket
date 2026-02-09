@@ -87,13 +87,13 @@ export default function EditPromptScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.field}>
           <Text style={styles.label}>Title</Text>
           <TextInput
             style={styles.input}
             placeholder="Prompt title..."
-            placeholderTextColor="#666"
+            placeholderTextColor="#475569"
             value={title}
             onChangeText={setTitle}
             maxLength={200}
@@ -105,7 +105,7 @@ export default function EditPromptScreen() {
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="Prompt content..."
-            placeholderTextColor="#666"
+            placeholderTextColor="#475569"
             value={content}
             onChangeText={setContent}
             multiline
@@ -120,7 +120,7 @@ export default function EditPromptScreen() {
           <TextInput
             style={styles.input}
             placeholder="e.g. coding, writing"
-            placeholderTextColor="#666"
+            placeholderTextColor="#475569"
             value={tags}
             onChangeText={setTags}
           />
@@ -132,6 +132,7 @@ export default function EditPromptScreen() {
           style={[styles.saveButton, saving && styles.saveButtonDisabled]}
           onPress={handleSave}
           disabled={saving}
+          activeOpacity={0.8}
         >
           {saving ? (
             <ActivityIndicator color="#fff" />
@@ -143,6 +144,7 @@ export default function EditPromptScreen() {
         <TouchableOpacity
           style={styles.cancelButton}
           onPress={() => router.back()}
+          activeOpacity={0.7}
         >
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
@@ -154,7 +156,7 @@ export default function EditPromptScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#16213e',
+    backgroundColor: '#0f172a',
   },
   scroll: {
     padding: 20,
@@ -163,21 +165,21 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#888',
+    color: '#64748b',
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#1e293b',
     borderWidth: 1,
-    borderColor: '#2a2a4e',
-    borderRadius: 12,
+    borderColor: '#334155',
+    borderRadius: 10,
     padding: 14,
-    fontSize: 15,
-    color: '#e0e0e0',
+    fontSize: 14,
+    color: '#e2e8f0',
   },
   textArea: {
     minHeight: 200,
@@ -185,19 +187,19 @@ const styles = StyleSheet.create({
   },
   charCount: {
     fontSize: 11,
-    color: '#555',
+    color: '#475569',
     textAlign: 'right',
     marginTop: 4,
   },
   error: {
-    color: '#ff6b6b',
+    color: '#ef4444',
     fontSize: 13,
     marginBottom: 16,
     textAlign: 'center',
   },
   saveButton: {
-    backgroundColor: '#6c63ff',
-    borderRadius: 12,
+    backgroundColor: '#7c6cff',
+    borderRadius: 10,
     padding: 16,
     alignItems: 'center',
     marginTop: 8,
@@ -207,19 +209,19 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '600',
   },
   cancelButton: {
-    borderRadius: 12,
+    borderRadius: 10,
     padding: 16,
     alignItems: 'center',
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#2a2a4e',
+    borderColor: '#334155',
   },
   cancelButtonText: {
-    color: '#888',
-    fontSize: 16,
+    color: '#94a3b8',
+    fontSize: 15,
   },
 });
