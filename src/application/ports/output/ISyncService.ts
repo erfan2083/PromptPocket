@@ -19,6 +19,9 @@ export interface ISyncService {
   /** Initialize connection and authenticate */
   initialize(userId: string): Promise<void>;
 
+  /** Restore a previously persisted sync session (e.g. after service worker restart) */
+  restore(): Promise<boolean>;
+
   /** Check if sync is currently enabled and authenticated */
   isEnabled(): boolean;
 

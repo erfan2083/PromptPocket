@@ -38,9 +38,9 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
   savePrompt: async (prompt: PromptDTO) => {
     try {
       await firebase.pushPrompt(prompt);
-      set((state) => ({
-        prompts: [prompt, ...state.prompts],
-      }));
+      // Don't update local state here - the onSnapshot real-time listener
+      // in _layout.tsx will automatically pick up the new prompt and call
+      // setPrompts(). Doing both causes duplicate entries.
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to save prompt',
@@ -52,9 +52,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
   updatePrompt: async (prompt: PromptDTO) => {
     try {
       await firebase.pushPrompt(prompt);
-      set((state) => ({
-        prompts: state.prompts.map((p) => (p.id === prompt.id ? prompt : p)),
-      }));
+      // Don't update local state - onSnapshot listener handles it
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to update prompt',
@@ -66,9 +64,7 @@ export const usePromptStore = create<PromptStore>((set, get) => ({
   deletePrompt: async (id: string) => {
     try {
       await firebase.deletePrompt(id);
-      set((state) => ({
-        prompts: state.prompts.filter((p) => p.id !== id),
-      }));
+      // Don't update local state - onSnapshot listener handles it
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to delete prompt',

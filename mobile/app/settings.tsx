@@ -33,13 +33,20 @@ export default function SettingsScreen() {
     );
   };
 
+  const uniqueTags = new Set(prompts.flatMap((p) => p.tags)).size;
+  const platforms = new Set(
+    prompts.map((p) => p.metadata.source.platform).filter((p) => p !== 'unknown')
+  ).size;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Account Section */}
       <Text style={styles.sectionTitle}>Account</Text>
       <View style={styles.card}>
         <View style={styles.row}>
-          <Ionicons name="person-circle-outline" size={22} color="#6c63ff" />
+          <View style={[styles.iconWrap, { backgroundColor: 'rgba(124, 108, 255, 0.1)' }]}>
+            <Ionicons name="person" size={16} color="#7c6cff" />
+          </View>
           <View style={styles.rowContent}>
             <Text style={styles.rowLabel}>Email</Text>
             <Text style={styles.rowValue}>{email || 'Not signed in'}</Text>
@@ -47,10 +54,12 @@ export default function SettingsScreen() {
         </View>
         <View style={styles.divider} />
         <View style={styles.row}>
-          <Ionicons name="cloud-done-outline" size={22} color="#4ade80" />
+          <View style={[styles.iconWrap, { backgroundColor: 'rgba(34, 197, 94, 0.1)' }]}>
+            <Ionicons name="cloud-done" size={16} color="#22c55e" />
+          </View>
           <View style={styles.rowContent}>
             <Text style={styles.rowLabel}>Sync Status</Text>
-            <Text style={[styles.rowValue, { color: '#4ade80' }]}>Connected</Text>
+            <Text style={[styles.rowValue, { color: '#22c55e' }]}>Connected</Text>
           </View>
         </View>
       </View>
@@ -59,7 +68,9 @@ export default function SettingsScreen() {
       <Text style={styles.sectionTitle}>Statistics</Text>
       <View style={styles.card}>
         <View style={styles.row}>
-          <Ionicons name="document-text-outline" size={22} color="#6c63ff" />
+          <View style={[styles.iconWrap, { backgroundColor: 'rgba(124, 108, 255, 0.1)' }]}>
+            <Ionicons name="document-text" size={16} color="#7c6cff" />
+          </View>
           <View style={styles.rowContent}>
             <Text style={styles.rowLabel}>Total Prompts</Text>
             <Text style={styles.rowValue}>{prompts.length}</Text>
@@ -67,22 +78,22 @@ export default function SettingsScreen() {
         </View>
         <View style={styles.divider} />
         <View style={styles.row}>
-          <Ionicons name="pricetag-outline" size={22} color="#6c63ff" />
+          <View style={[styles.iconWrap, { backgroundColor: 'rgba(124, 108, 255, 0.1)' }]}>
+            <Ionicons name="pricetag" size={16} color="#7c6cff" />
+          </View>
           <View style={styles.rowContent}>
             <Text style={styles.rowLabel}>Unique Tags</Text>
-            <Text style={styles.rowValue}>
-              {new Set(prompts.flatMap((p) => p.tags)).size}
-            </Text>
+            <Text style={styles.rowValue}>{uniqueTags}</Text>
           </View>
         </View>
         <View style={styles.divider} />
         <View style={styles.row}>
-          <Ionicons name="globe-outline" size={22} color="#6c63ff" />
+          <View style={[styles.iconWrap, { backgroundColor: 'rgba(124, 108, 255, 0.1)' }]}>
+            <Ionicons name="globe" size={16} color="#7c6cff" />
+          </View>
           <View style={styles.rowContent}>
             <Text style={styles.rowLabel}>Platforms Used</Text>
-            <Text style={styles.rowValue}>
-              {new Set(prompts.map((p) => p.metadata.source.platform).filter((p) => p !== 'unknown')).size}
-            </Text>
+            <Text style={styles.rowValue}>{platforms}</Text>
           </View>
         </View>
       </View>
@@ -91,7 +102,9 @@ export default function SettingsScreen() {
       <Text style={styles.sectionTitle}>About</Text>
       <View style={styles.card}>
         <View style={styles.row}>
-          <Ionicons name="information-circle-outline" size={22} color="#6c63ff" />
+          <View style={[styles.iconWrap, { backgroundColor: 'rgba(124, 108, 255, 0.1)' }]}>
+            <Ionicons name="information-circle" size={16} color="#7c6cff" />
+          </View>
           <View style={styles.rowContent}>
             <Text style={styles.rowLabel}>Version</Text>
             <Text style={styles.rowValue}>1.0.0</Text>
@@ -99,17 +112,23 @@ export default function SettingsScreen() {
         </View>
         <View style={styles.divider} />
         <View style={styles.row}>
-          <Ionicons name="sync-outline" size={22} color="#6c63ff" />
+          <View style={[styles.iconWrap, { backgroundColor: 'rgba(124, 108, 255, 0.1)' }]}>
+            <Ionicons name="sync" size={16} color="#7c6cff" />
+          </View>
           <View style={styles.rowContent}>
-            <Text style={styles.rowLabel}>Sync</Text>
+            <Text style={styles.rowLabel}>Sync Backend</Text>
             <Text style={styles.rowValue}>Firebase Firestore</Text>
           </View>
         </View>
       </View>
 
       {/* Sign Out */}
-      <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-        <Ionicons name="log-out-outline" size={20} color="#ff6b6b" />
+      <TouchableOpacity
+        style={styles.signOutButton}
+        onPress={handleSignOut}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="log-out-outline" size={18} color="#ef4444" />
         <Text style={styles.signOutText}>Sign Out</Text>
       </TouchableOpacity>
 
@@ -123,51 +142,58 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#16213e',
+    backgroundColor: '#0f172a',
   },
   content: {
     padding: 20,
     paddingBottom: 40,
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#888',
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748b',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 10,
     marginTop: 20,
   },
   card: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 12,
+    backgroundColor: '#1e293b',
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#2a2a4e',
+    borderColor: '#334155',
     overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    gap: 14,
+    padding: 14,
+    gap: 12,
+  },
+  iconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   rowContent: {
     flex: 1,
   },
   rowLabel: {
     fontSize: 14,
-    color: '#e0e0e0',
+    color: '#e2e8f0',
     fontWeight: '500',
   },
   rowValue: {
-    fontSize: 13,
-    color: '#888',
+    fontSize: 12,
+    color: '#64748b',
     marginTop: 2,
   },
   divider: {
     height: 1,
-    backgroundColor: '#2a2a4e',
-    marginLeft: 52,
+    backgroundColor: '#334155',
+    marginLeft: 58,
   },
   signOutButton: {
     flexDirection: 'row',
@@ -175,20 +201,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     marginTop: 32,
-    padding: 16,
-    borderRadius: 12,
+    padding: 14,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#ff6b6b33',
-    backgroundColor: '#ff6b6b11',
+    borderColor: 'rgba(239, 68, 68, 0.2)',
+    backgroundColor: 'rgba(239, 68, 68, 0.05)',
   },
   signOutText: {
-    color: '#ff6b6b',
-    fontSize: 16,
+    color: '#ef4444',
+    fontSize: 15,
     fontWeight: '600',
   },
   footer: {
     textAlign: 'center',
-    color: '#555',
+    color: '#475569',
     fontSize: 12,
     marginTop: 20,
     lineHeight: 18,

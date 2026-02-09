@@ -36,13 +36,14 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: '#1a1a2e' },
-          headerTintColor: '#e0e0e0',
-          headerTitleStyle: { fontWeight: '700' },
-          contentStyle: { backgroundColor: '#16213e' },
+          headerStyle: { backgroundColor: '#0f172a' },
+          headerTintColor: '#e2e8f0',
+          headerTitleStyle: { fontWeight: '700', fontSize: 17 },
+          contentStyle: { backgroundColor: '#0f172a' },
+          headerShadowVisible: false,
         }}
       >
         <Stack.Screen
