@@ -213,14 +213,22 @@ export class FirebaseSyncService implements ISyncService {
     return collection(this.db, 'users', this.getUserId(), 'folders');
   }
 
+  /**
+   * Strip undefined values from an object before sending to Firestore.
+   * Firestore rejects documents that contain `undefined` fields.
+   */
+  private sanitize<T>(data: T): T {
+    return JSON.parse(JSON.stringify(data));
+  }
+
   async pushPrompt(prompt: PromptDTO): Promise<void> {
     const ref = doc(this.getPromptsCollection(), prompt.id);
-    await setDoc(ref, prompt);
+    await setDoc(ref, this.sanitize(prompt));
   }
 
   async pushFolder(folder: FolderDTO): Promise<void> {
     const ref = doc(this.getFoldersCollection(), folder.id);
-    await setDoc(ref, folder);
+    await setDoc(ref, this.sanitize(folder));
   }
 
   async deletePrompt(promptId: string): Promise<void> {
