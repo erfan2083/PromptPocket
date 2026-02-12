@@ -1,133 +1,126 @@
 # PromptPocket
 
-A professional browser extension for saving, organizing, and reusing AI prompts across platforms.
+A Chrome browser extension for saving, organizing, and reusing AI prompts across platforms. Features one-click saving from ChatGPT and Gemini, fuzzy search, folder/tag organization, and optional Firebase cloud sync with a companion mobile app.
 
-## 🚀 Features
+## Features
 
-- **One-Click Save**: Save prompts directly from ChatGPT and other AI chat platforms
-- **Smart Organization**: Organize with folders and tags
-- **Powerful Search**: Find prompts instantly with fuzzy search
-- **Privacy First**: All data stored locally on your device
-- **Platform Agnostic**: Extensible architecture for multiple AI platforms
+- **One-Click Save** - Save prompts directly from ChatGPT and Google Gemini with injected save buttons
+- **Smart Organization** - Organize prompts with folders, tags, and auto-generated titles
+- **Fuzzy Search** - Find prompts instantly with Fuse.js-powered full-text search, filters, and sorting
+- **Cloud Sync** - Optional Firebase sync across devices with email or Google sign-in
+- **Mobile App** - Companion React Native (Expo) app shares prompts via the same Firebase backend
+- **Privacy First** - All data stored locally in IndexedDB by default; sync is opt-in
+- **Extensible** - Hexagonal architecture with a platform adapter system for adding new AI sites
 
-## 🏗️ Architecture
+## Supported Platforms
 
-This project uses **Hexagonal Architecture** (Ports & Adapters) for:
-- Clean separation of concerns
-- Easy testing and maintenance
-- Platform-agnostic core logic
-- Flexible implementation swapping
+| Platform | Status |
+|---|---|
+| ChatGPT (`chatgpt.com`, `chat.openai.com`) | Supported |
+| Google Gemini (`gemini.google.com`) | Supported |
+| Claude | Planned |
 
-### Project Structure
+## Architecture
+
+Built with **Hexagonal Architecture** (Ports & Adapters):
 
 ```
 src/
-├── domain/              # Core business logic (no dependencies)
-├── application/         # Use cases and ports
-├── infrastructure/      # External adapters (DB, API, UI)
-├── presentation/        # React components and pages
-├── content-script/      # Content script entry
-├── background/          # Service worker
-└── side-panel/          # Side panel UI
+├── domain/              # Core business logic (entities, value objects)
+├── application/         # Use cases and port interfaces
+├── infrastructure/      # Adapters (IndexedDB, Fuse.js, Firebase, platform adapters)
+├── presentation/        # React components, Zustand stores, pages
+├── content-script/      # Injected save buttons on AI platforms
+├── background/          # Service worker (message routing, sync)
+├── side-panel/          # Chrome side panel UI
+└── shared/              # Shared types and constants
 ```
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-- **Framework**: React 18 + TypeScript 5
-- **Build Tool**: Vite 5
-- **State Management**: Zustand
-- **UI**: Tailwind CSS + shadcn/ui
-- **Search**: Fuse.js
-- **Storage**: IndexedDB
-- **Testing**: Vitest + Playwright
+- **UI**: React 18, TypeScript 5, Tailwind CSS 3.4, Lucide React
+- **Build**: Vite 5 (multi-target: side panel, content script, background worker)
+- **State**: Zustand
+- **Search**: Fuse.js (fuzzy search)
+- **Storage**: IndexedDB (local), Firebase Firestore (cloud sync, optional)
+- **Auth**: Firebase Auth (email/password + Google OAuth)
+- **Platform**: Chrome Extension Manifest V3
+- **Testing**: Vitest, @testing-library/react, Playwright
 
-## 📦 Installation
+## Getting Started
 
-```bash
-# Install dependencies
-npm install
+### Prerequisites
 
-# Development mode
-npm run dev
+- Node.js 18+
+- npm
 
-# Build for production
-npm run build
+### Installation
 
-# Run tests
-npm test
-
-# E2E tests
-npm run test:e2e
-```
-
-## 🔧 Development
-
-1. **Clone the repository**
 ```bash
 git clone <repository-url>
 cd promptpocket
-```
-
-2. **Install dependencies**
-```bash
 npm install
 ```
 
-3. **Start development**
+### Development
+
 ```bash
-npm run dev
+npm run dev          # Start Vite dev server
+npm run build        # Type-check + multi-target build to dist/
+npm run type-check   # TypeScript type checking only
+npm run lint         # ESLint (zero warnings allowed)
+npm run format       # Prettier formatting
+npm run test         # Vitest unit tests
+npm run test:e2e     # Playwright end-to-end tests
 ```
 
-4. **Load extension in Chrome**
-   - Open `chrome://extensions/`
-   - Enable "Developer mode"
-   - Click "Load unpacked"
-   - Select the `dist` folder
+### Load in Chrome
 
-## 🏗️ Adding a New Platform Adapter
+1. Run `npm run build`
+2. Open `chrome://extensions/`
+3. Enable "Developer mode"
+4. Click "Load unpacked"
+5. Select the `dist/` folder
 
-1. Create adapter in `src/infrastructure/platform-adapters/[platform]/`
+### Cloud Sync Setup (Optional)
+
+Cloud sync requires a Firebase project. To enable it:
+
+1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+2. Enable Firestore and Authentication (Email/Password and Google providers)
+3. Copy `.env.example` to `.env` and fill in your Firebase credentials
+4. For Google sign-in, create a Chrome Extension OAuth 2.0 client ID in Google Cloud Console
+5. Update `oauth2.client_id` in `public/manifest.json` with your client ID
+6. Rebuild the extension
+
+Without these variables, the extension works fully offline with local IndexedDB storage.
+
+## Adding a New Platform Adapter
+
+1. Create a directory in `src/infrastructure/platform-adapters/<platform>/`
 2. Extend `BasePlatformAdapter`
-3. Implement required methods
-4. Register in `AdapterRegistry`
+3. Implement `matches()`, `getSelectors()`, `getActionBar()`, and other required methods
+4. Register the adapter in `src/infrastructure/di/setup.ts`
+5. Add the platform's URL to `host_permissions` and `content_scripts.matches` in `public/manifest.json`
 
-Example:
-```typescript
-export class ClaudeAdapter extends BasePlatformAdapter {
-  readonly name = 'Claude';
-  readonly platform = 'claude';
-  
-  matches(): boolean {
-    return window.location.hostname.includes('claude.ai');
-  }
-  
-  // ... implement other methods
-}
-```
+## Mobile App
 
-## 🧪 Testing
+A companion React Native (Expo) app lives in `mobile/`. It connects to the same Firebase backend for cross-device sync. See `mobile/` for setup instructions.
 
-```bash
-# Unit tests
-npm test
+## Scripts
 
-# Watch mode
-npm run test:ui
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Type-check + production build |
+| `npm run type-check` | TypeScript type checking only |
+| `npm run lint` | ESLint with zero warnings policy |
+| `npm run format` | Prettier formatting |
+| `npm run test` | Run unit tests (Vitest) |
+| `npm run test:ui` | Run tests with browser UI |
+| `npm run test:e2e` | Run end-to-end tests (Playwright) |
 
-# E2E tests
-npm run test:e2e
-```
-
-## 📝 Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Lint code
-- `npm run format` - Format code with Prettier
-- `npm run type-check` - Type check TypeScript
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -135,10 +128,6 @@ npm run test:e2e
 4. Add tests
 5. Submit a pull request
 
-## 📄 License
+## License
 
 MIT
-
-## 🙏 Credits
-
-Built with ❤️ using modern web technologies
