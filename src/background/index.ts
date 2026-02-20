@@ -134,19 +134,22 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
       if (result.success) {
         chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
         // Push to cloud sync if enabled
-        try {
-          const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
-          if (result.promptId) {
-            const getAllUseCase = container.resolve<GetAllPromptsUseCase>('GetAllPromptsUseCase');
-            const allResult = await getAllUseCase.execute();
-            const saved = allResult.prompts.find((p) => p.id.value === result.promptId);
-            if (saved) {
-              await syncUseCase.pushPrompt(saved.toDTO());
+        // Fire-and-forget: sync errors must never block or delay the save response
+        (async () => {
+          try {
+            const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
+            if (result.promptId) {
+              const getAllUseCase = container.resolve<GetAllPromptsUseCase>('GetAllPromptsUseCase');
+              const allResult = await getAllUseCase.execute();
+              const saved = allResult.prompts.find((p) => p.id.value === result.promptId);
+              if (saved) {
+                await syncUseCase.pushPrompt(saved.toDTO());
+              }
             }
+          } catch {
+            // Sync errors are intentionally ignored
           }
-        } catch {
-          // Sync errors shouldn't block the save response
-        }
+        })();
       }
       return {
         success: result.success,
@@ -187,18 +190,20 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
       const updateResult = await updateUseCase.execute(message.payload);
       if (updateResult.success) {
         chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
-        // Push updated prompt to cloud
-        try {
-          const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
-          const getAllUseCase = container.resolve<GetAllPromptsUseCase>('GetAllPromptsUseCase');
-          const allResult = await getAllUseCase.execute();
-          const updated = allResult.prompts.find((p) => p.id.value === message.payload.id);
-          if (updated) {
-            await syncUseCase.pushPrompt(updated.toDTO());
+        // Fire-and-forget: sync errors must never block or delay the update response
+        (async () => {
+          try {
+            const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
+            const getAllUseCase = container.resolve<GetAllPromptsUseCase>('GetAllPromptsUseCase');
+            const allResult = await getAllUseCase.execute();
+            const updated = allResult.prompts.find((p) => p.id.value === message.payload.id);
+            if (updated) {
+              await syncUseCase.pushPrompt(updated.toDTO());
+            }
+          } catch {
+            // Sync errors are intentionally ignored
           }
-        } catch {
-          // Sync errors shouldn't block the update response
-        }
+        })();
       }
       return {
         success: updateResult.success,
@@ -212,13 +217,15 @@ async function handleMessage(message: ExtensionMessage): Promise<ExtensionRespon
       const result = await useCase.execute(message.payload.id);
       if (result.success) {
         chrome.runtime.sendMessage({ type: 'PROMPTS_UPDATED' }).catch(() => {});
-        // Remove from cloud
-        try {
-          const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
-          await syncUseCase.removePrompt(message.payload.id);
-        } catch {
-          // Sync errors shouldn't block the delete response
-        }
+        // Fire-and-forget: sync errors must never block or delay the delete response
+        (async () => {
+          try {
+            const syncUseCase = container.resolve<SyncPromptsUseCase>('SyncPromptsUseCase');
+            await syncUseCase.removePrompt(message.payload.id);
+          } catch {
+            // Sync errors are intentionally ignored
+          }
+        })();
       }
       return {
         success: result.success,
