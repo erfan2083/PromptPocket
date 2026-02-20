@@ -18,6 +18,12 @@ export function SaveButton({ content, platform, url, compact = false }: SaveButt
   const handleClick = async () => {
     if (isLoading) return;
 
+    // Detect invalidated extension context before attempting to send a message
+    if (!chrome?.runtime?.sendMessage) {
+      setContextInvalid(true);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -50,7 +56,10 @@ export function SaveButton({ content, platform, url, compact = false }: SaveButt
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      if (message.includes('Extension context invalidated')) {
+      if (
+        message.includes('Extension context invalidated') ||
+        message.includes('Cannot read properties of undefined')
+      ) {
         setContextInvalid(true);
       } else {
         console.error('Error toggling prompt save:', error);
